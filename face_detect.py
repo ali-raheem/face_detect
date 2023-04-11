@@ -6,7 +6,7 @@ import argparse
 import itertools
 import multiprocessing
 from hashlib import blake2b
-from PIL import Image, ImageDraw
+from PIL import Image
 import face_recognition
 
 
