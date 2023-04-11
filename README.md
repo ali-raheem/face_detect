@@ -4,7 +4,7 @@ Run face recognition locally on photos using the `face_recognition` module.
 * face_detect.py - Run image recognition
 * face_search.py - Search the results and browse the images
 
-![Screenshot of face_search.py showing Tkinter GUI with some image results and one image opened fullsize](face_search.py)
+![Screenshot of face_search.py showing Tkinter GUI with some image results and one image opened fullsize](./face_search.py)
 
 ## Features
 * multithreading
