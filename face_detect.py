@@ -3,22 +3,28 @@ import os
 import glob
 import sqlite3
 import argparse
+import itertools
 import multiprocessing
 from hashlib import blake2b
 from PIL import Image, ImageDraw
 import face_recognition
 
 
+EXTENSIONS = ('*.jpg', '*.JPG')
 def get_files(folder):
-    return glob.glob(os.path.join(folder, '*.[jJ][pP][gG]'))
+    def glob_map(pattern):
+        return glob.iglob(os.path.join(folder, pattern))
+    return itertools.chain.from_iterable(glob_map(ext) for ext in EXTENSIONS)
 
 def detect_faces(f, known_face_names, known_face_encodings):
-    conn = sqlite3.connect(database, isolation_level=None)
-    cur = conn.cursor()
     cur.execute("SELECT * FROM image_data WHERE filename = ?", (f,))
     res = cur.fetchone()
     if res is not None:
         print(f"Skipping {f}...")
+        with sqlite3.connect(database, isolation_level=None) as connection:
+            cursor = connection.cursor()
+            cursor.execute("INSERT INTO image_data (filename, people, boxes) VALUES (?, ?, ?)",
+                           (f, "[]", "[]"))
         return
     input_image = face_recognition.load_image_file(f)
     input_image_encodings = face_recognition.face_encodings(input_image)
@@ -43,7 +49,6 @@ def detect_faces(f, known_face_names, known_face_encodings):
             known_face_names.append(name)
             known_face_encodings.append(encoding)
             face_names.append(name)
-            
             top, right, bottom, left = location
             width = right - left
             height = bottom - top
@@ -55,9 +60,10 @@ def detect_faces(f, known_face_names, known_face_encodings):
             pil_image = Image.fromarray(face_image)
             output_file_path = os.path.join(output_folder, name + ".jpg")
             pil_image.save(output_file_path)
-        cur.execute("INSERT INTO image_data (filename, people, boxes) VALUES (?, ?, ?)",
+        with sqlite3.connect(database, isolation_level=None) as connection:
+            cursor = connection.cursor()
+            cursor.execute("INSERT INTO image_data (filename, people, boxes) VALUES (?, ?, ?)",
                        (f, str(face_names), str(face_locations)))
-        conn.commit()
 
 
 if __name__ == "__main__":
@@ -80,8 +86,6 @@ if __name__ == "__main__":
     cur = conn.cursor()
     cur.execute('''CREATE TABLE IF NOT EXISTS image_data 
     (id INTEGER PRIMARY KEY, filename TEXT, people TEXT, boxes TEXT)''')
-    conn.commit()
-    conn.close()
 
     for f in get_files(known_folder):
         ref_image = face_recognition.load_image_file(f)
