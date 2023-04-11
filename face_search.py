@@ -1,11 +1,12 @@
 import os
 import sqlite3
+import argparse
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 
 num_columns = 5
-display_results = 20
+display_results = 15
 offset = 0
 
 # Find files with name (from the previous answer)
@@ -70,8 +71,13 @@ def display_thumbnails(filepaths):
         label.grid(row=row, column=col, padx=5, pady=5)
         label.bind("<Button-1>", lambda e, path=filepath: open_image(path))
 
+
+parser = argparse.ArgumentParser(description="Face Database GUI")
+parser.add_argument('--database', default='faces.db', help='Database file name')
+args = parser.parse_args()
+
 # GUI setup
-database = 'faces.db'
+database = args.database
 
 root = tk.Tk()
 root.title("Face Search")
