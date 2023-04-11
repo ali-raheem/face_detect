@@ -31,19 +31,10 @@ def detect_faces(f, known_face_names, known_face_encodings):
         matches = face_recognition.compare_faces(known_face_encodings, encoding)
         if any(matches):
             first_match_index = matches.index(True)
-            name = known_face_names[first_match_index]
+            face_names.append(known_face_names[first_match_index])
         else:
             name = "Unknown_" + blake2b(str(encoding).encode('utf-8')).hexdigest()[:15]
             known_face_names.append(name)
-    for encoding in input_image_encodings:
-        matches = face_recognition.compare_faces(known_face_encodings, encoding)
-        if any(matches):
-            first_match_index = matches.index(True)
-            name = known_face_names[first_match_index]
-        else:
-            name = "Unknown " + blake2b(str(encoding).encode('utf-8')).hexdigest()[:15]
-            known_face_names.append(name)
-            known_face_encodings.append(encoding)
             face_names.append(name)
             top, right, bottom, left = location
             width = right - left
