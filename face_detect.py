@@ -21,10 +21,6 @@ def detect_faces(f, known_face_names, known_face_encodings):
     res = cur.fetchone()
     if res is not None:
         print(f"Skipping {f}...")
-        with sqlite3.connect(database, isolation_level=None) as connection:
-            cursor = connection.cursor()
-            cursor.execute("INSERT INTO image_data (filename, people, boxes) VALUES (?, ?, ?)",
-                           (f, "[]", "[]"))
         return
     input_image = face_recognition.load_image_file(f)
     input_image_encodings = face_recognition.face_encodings(input_image)
