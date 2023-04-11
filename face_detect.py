@@ -17,11 +17,13 @@ def get_files(folder):
     return itertools.chain.from_iterable(glob_map(ext) for ext in EXTENSIONS)
 
 def detect_faces(f, known_face_names, known_face_encodings):
-    cur.execute("SELECT * FROM image_data WHERE filename = ?", (f,))
-    res = cur.fetchone()
-    if res is not None:
-        print(f"Skipping {f}...")
-        return
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM image_data WHERE filename = ?", (f,))
+        res = cursor.fetchone()
+        if res is not None:
+            print(f"Skipping {f}...")
+            return
     input_image = face_recognition.load_image_file(f)
     input_image_encodings = face_recognition.face_encodings(input_image)
     face_locations = face_recognition.face_locations(input_image)
@@ -51,7 +53,6 @@ def detect_faces(f, known_face_names, known_face_encodings):
             cursor = connection.cursor()
             cursor.execute("INSERT INTO image_data (filename, people, boxes) VALUES (?, ?, ?)",
                        (f, str(face_names), str(face_locations)))
-            connection.commit()
 
 
 if __name__ == "__main__":
@@ -70,10 +71,10 @@ if __name__ == "__main__":
     known_face_encodings = []
     known_face_names = []
 
-    conn = sqlite3.connect(database)
-    cur = conn.cursor()
-    cur.execute('''CREATE TABLE IF NOT EXISTS image_data 
-    (id INTEGER PRIMARY KEY, filename TEXT, people TEXT, boxes TEXT)''')
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS image_data
+            (id INTEGER PRIMARY KEY, filename TEXT, people TEXT, boxes TEXT)''')
 
     for f in get_files(known_folder):
         ref_image = face_recognition.load_image_file(f)
@@ -87,5 +88,4 @@ if __name__ == "__main__":
     kfn = multiprocessing.Manager().list(known_face_names)
     with multiprocessing.Pool(processes=args.cpus) as pool:
         pool.starmap(detect_faces, [(f, kfn, kfe) for f in get_files(unknown_folder)])
-    conn.commit() # for luck
-    conn.close()
+
