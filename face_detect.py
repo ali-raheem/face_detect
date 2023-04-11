@@ -60,6 +60,7 @@ def detect_faces(f, known_face_names, known_face_encodings):
             cursor = connection.cursor()
             cursor.execute("INSERT INTO image_data (filename, people, boxes) VALUES (?, ?, ?)",
                        (f, str(face_names), str(face_locations)))
+            connection.commit()
 
 
 if __name__ == "__main__":
@@ -95,5 +96,5 @@ if __name__ == "__main__":
     kfn = multiprocessing.Manager().list(known_face_names)
     with multiprocessing.Pool(processes=args.cpus) as pool:
         pool.starmap(detect_faces, [(f, kfn, kfe) for f in get_files(unknown_folder)])
-
+    conn.commit() # for luck
     conn.close()
